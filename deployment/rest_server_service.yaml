@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rest_server_service
+spec:
+  selector:
+    app: rest-server_service
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000

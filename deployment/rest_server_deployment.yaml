@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rest-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rest-server-deployment
+  template:
+    metadata:
+      labels:
+        app: rest-server-deployment
+    spec:
+      containers:
+      - name: rest-server-deployment
+        image: pratikbhirud/rest_server:0.0.4
+        ports:
+        - containerPort: 8000
+        env:
+        - name: RABBITMQ_HOST
+          value: rabbitmq
+        - name: REDIS_HOST
+          value: redis-service
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: rabbitmq-password
