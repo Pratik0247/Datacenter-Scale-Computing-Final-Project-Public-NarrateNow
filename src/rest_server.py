@@ -8,7 +8,7 @@ from flask import Flask, jsonify, request
 from google.cloud import storage
 
 from constants import (GCS_BUCKET_NAME, MAX_FILE_SIZE, RABBITMQ_HOST,
-                       SPLITTER_QUEUE_NAME, UPLOAD_FOLDER, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD)
+                       SPLITTER_QUEUE_NAME, UPLOAD_FOLDER, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD, RABBITMQ_USER)
 from messages import split_job, add_book
 from utils import upload_to_gcs
 
@@ -20,7 +20,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 storage_client = storage.Client()
 
 # ---- Initialize RabbitMQ client for job creation ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username='user', password=RABBITMQ_PASSWORD)))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
 
 # ---- Queue to hold split jobs ----

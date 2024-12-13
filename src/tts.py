@@ -4,21 +4,15 @@ from tempfile import NamedTemporaryFile
 import pika
 from google.cloud import texttospeech
 
-from constants import GCS_BUCKET_NAME, RABBITMQ_HOST, TTS_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD
+from constants import GCS_BUCKET_NAME, RABBITMQ_HOST, TTS_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD, \
+  RABBITMQ_USER
 from messages import update_chunk_status, remove_chunk
 from redis_ops import UPDATE_CHUNK_STATUS, REMOVE_CHUNK
 from utils import download_file_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username='user', password=RABBITMQ_PASSWORD)))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
-
-# Set prefetch count to 1
-channel.basic_qos(prefetch_count=1)
-
-# ---- Queue to hold TTS jobs ----
-channel.queue_declare(queue=TTS_QUEUE_NAME)
-channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
 
 # ---- Instantiate a client for the Text-to-Speech API ----
 client = texttospeech.TextToSpeechClient()
@@ -129,17 +123,25 @@ def callback(ch, method, properties, body):
     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
 
-# Set up RabbitMQ consumer
+def start_service():
+  # Set prefetch count to 1
+  channel.basic_qos(prefetch_count=1)
 
+  # ---- Queue to hold TTS jobs ----
+  channel.queue_declare(queue=TTS_QUEUE_NAME)
+  channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
 
+  # Set up RabbitMQ consumer
+  channel.basic_consume(queue=TTS_QUEUE_NAME, on_message_callback=callback)
+  print("Waiting for TTS jobs.")
 
-channel.basic_consume(queue=TTS_QUEUE_NAME, on_message_callback=callback)
-print("Waiting for TTS jobs.")
+  # ---- Keep the program running ----
+  try:
+    channel.start_consuming()
+  except KeyboardInterrupt:
+    print("Stopping the TTS program...")
+    channel.stop_consuming()
+    connection.close()
 
-# ---- Keep the program running ----
-try:
-  channel.start_consuming()
-except KeyboardInterrupt:
-  print("Stopping the TTS program...")
-  channel.stop_consuming()
-  connection.close()
+if __name__ == "__main__":
+  start_service()

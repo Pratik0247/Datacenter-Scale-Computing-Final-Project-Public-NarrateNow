@@ -4,7 +4,8 @@ import os
 import pika
 from pydub import AudioSegment
 
-from constants import GCS_BUCKET_NAME, RABBITMQ_HOST, EVENT_TRACKER_QUEUE_NAME, STITCH_QUEUE_NAME, RABBITMQ_PASSWORD
+from constants import GCS_BUCKET_NAME, RABBITMQ_HOST, EVENT_TRACKER_QUEUE_NAME, STITCH_QUEUE_NAME, RABBITMQ_PASSWORD, \
+  RABBITMQ_USER
 from messages import remove_chapter
 from redis_ops import REMOVE_CHAPTER
 from utils import download_folder_from_gcs, upload_to_gcs
@@ -24,7 +25,7 @@ connection = pika.BlockingConnection(
   pika.ConnectionParameters(
     RABBITMQ_HOST,
     credentials=pika.PlainCredentials(
-      username='user',
+      username=RABBITMQ_USER,
       password=RABBITMQ_PASSWORD)
   )
 )

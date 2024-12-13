@@ -10,17 +10,16 @@ from bs4 import BeautifulSoup
 from ebooklib import ITEM_DOCUMENT, epub
 
 from constants import (CHUNKER_QUEUE_NAME, DOWNLOAD_FOLDER,
-                       RABBITMQ_HOST, SPLITTER_QUEUE_NAME, GCS_BUCKET_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD)
+                       RABBITMQ_HOST, SPLITTER_QUEUE_NAME, GCS_BUCKET_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD,
+                       RABBITMQ_USER)
 from messages import add_chapter, update_book_status, chunker_job
 from utils import download_file_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username='user', password=RABBITMQ_PASSWORD)))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
 
-# ---- Queue to hold split jobs ----
-channel.queue_declare(queue=SPLITTER_QUEUE_NAME)
-channel.queue_declare(queue = CHUNKER_QUEUE_NAME)
+
 
 # ---- Callback function to process messages ----
 def process_split_job(ch, method, properties, body):
@@ -245,18 +244,25 @@ def is_metadata(chapter_title, chapter_text):
   # If none of the conditions are met, it's likely content
   return False
 
+def start_service():
+  # ---- Queue to hold split jobs ----
+  channel.queue_declare(queue=SPLITTER_QUEUE_NAME)
+  channel.queue_declare(queue = CHUNKER_QUEUE_NAME)
 
-# ---- Start consuming messages from the queue ----
-print(f"Listening for messages on queue '{SPLITTER_QUEUE_NAME}'...")
-channel.basic_consume(
-  queue=SPLITTER_QUEUE_NAME,
-  on_message_callback=process_split_job
-)
+  # ---- Start consuming messages from the queue ----
+  print(f"Listening for messages on queue '{SPLITTER_QUEUE_NAME}'...")
+  channel.basic_consume(
+    queue=SPLITTER_QUEUE_NAME,
+    on_message_callback=process_split_job
+  )
 
-# ---- Keep the program running ----
-try:
-  channel.start_consuming()
-except KeyboardInterrupt:
-  print("Stopping the splitter program...")
-  channel.stop_consuming()
-  connection.close()
+  # ---- Keep the program running ----
+  try:
+    channel.start_consuming()
+  except KeyboardInterrupt:
+    print("Stopping the splitter program...")
+    channel.stop_consuming()
+    connection.close()
+
+if __name__ == "__main__":
+  start_service()

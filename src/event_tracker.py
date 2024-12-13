@@ -4,7 +4,8 @@ import pika
 import redis
 
 import redis_ops
-from constants import REDIS_HOST, REDIS_PORT, STITCH_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_HOST, RABBITMQ_PASSWORD
+from constants import REDIS_HOST, REDIS_PORT, STITCH_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_HOST, \
+  RABBITMQ_PASSWORD, RABBITMQ_USER
 from messages import audio_stitch_job
 
 ALLOWED_BOOK_STATUS = {
@@ -32,12 +33,10 @@ ALLOWED_CHUNK_STATUS = {
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
 # ---- Initialize RabbitMQ Connection ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username='user', password=RABBITMQ_PASSWORD)))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
 
-# Declare queues
-channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
-channel.queue_declare(queue=STITCH_QUEUE_NAME)
+
 
 # ---- Status Tracking Functions ----
 def set_status(entity_type, entity_id, status):
@@ -373,13 +372,21 @@ def process_message(ch, method, properties, body):
     # Reject and requeue the message for future processing
     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
-# ---- RabbitMQ Consumer ----
-channel.basic_consume(queue=EVENT_TRACKER_QUEUE_NAME, on_message_callback=process_message)
 
-print("Event tracker service is listening for jobs...")
-try:
-  channel.start_consuming()
-except KeyboardInterrupt:
-  print("Stopping the event tracker service...")
-  channel.stop_consuming()
-  connection.close()
+def start_service():
+  # Declare queues
+  channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
+  channel.queue_declare(queue=STITCH_QUEUE_NAME)
+  # ---- RabbitMQ Consumer ----
+  channel.basic_consume(queue=EVENT_TRACKER_QUEUE_NAME, on_message_callback=process_message)
+
+  print("Event tracker service is listening for jobs...")
+  try:
+    channel.start_consuming()
+  except KeyboardInterrupt:
+    print("Stopping the event tracker service...")
+    channel.stop_consuming()
+    connection.close()
+
+if __name__ == "__main__":
+  start_service()

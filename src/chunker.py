@@ -14,14 +14,6 @@ from utils import download_file_from_gcs, upload_to_gcs
 connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
 
-# Set prefetch count to 1
-channel.basic_qos(prefetch_count=1)
-
-# ---- Queue to hold split jobs ----
-channel.queue_declare(queue=CHUNKER_QUEUE_NAME)
-channel.queue_declare(queue=TTS_QUEUE_NAME)
-channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
-
 def read_text_from_file(file_path):
   """Reads text content from the given file."""
   if not os.path.exists(file_path):
@@ -146,6 +138,13 @@ def callback(ch, method, properties, body):
     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
 def start_service():
+  # Set prefetch count to 1
+  channel.basic_qos(prefetch_count=1)
+
+  # ---- Queue to hold split jobs ----
+  channel.queue_declare(queue=CHUNKER_QUEUE_NAME)
+  channel.queue_declare(queue=TTS_QUEUE_NAME)
+  channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
   # Set up RabbitMQ consumer
   channel.basic_consume(queue=CHUNKER_QUEUE_NAME, on_message_callback=callback)
 
