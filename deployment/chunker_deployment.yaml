@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: chunker
-        image: pratikbhirud/chunker:0.1.5
+        image: pratikbhirud/chunker:0.3.2
         env:
         - name: RABBITMQ_HOST
           value: rabbitmq

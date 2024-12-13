@@ -84,9 +84,11 @@ def stitch_audio_files(bucket_name, input_folder_prefix, output_file_gcs_path):
 
   # Temporary local directory for storing downloaded chunk files
   temp_input_dir = "temp_audio_files"
-  output_local_path = os.path.join(temp_input_dir, "output.mp3")
+  temp_output_dir = "temp_output_files"
+  output_local_path = os.path.join(temp_output_dir, "output.mp3")
   try:
     os.makedirs(temp_input_dir, exist_ok=True)
+    os.makedirs(temp_output_dir, exist_ok=True)
     # Download all files from the GCS folder to the local temp directory
     print(f"Downloading files from GCS folder: {input_folder_prefix}...")
     download_folder_from_gcs(bucket_name, input_folder_prefix, temp_input_dir)
