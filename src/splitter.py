@@ -228,9 +228,6 @@ def is_metadata(chapter_title, chapter_text):
   if any(keyword in title_lower for keyword in METADATA_KEYWORDS):
     return True
 
-  # Check if the text is too short to be meaningful
-  if len(text_lower.strip()) < 100:  # Adjust threshold as needed
-    return True
 
   # Check for high non-alphanumeric character ratio (common in metadata)
   non_alnum_ratio = sum(1 for char in text_lower if not char.isalnum()) / max(len(text_lower), 1)
