@@ -4,7 +4,7 @@
 echo "Bringing up rabbitmq"
 #helm install rabbitmq bitnami/rabbitmq
 helm install rabbitmq bitnami/rabbitmq
-kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=rabbitmq --timeout=30s
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=rabbitmq --timeout=180s
 
 echo "Bringing up redis_deployment"
 kubectl apply -f deployment/redis_deployment.yaml

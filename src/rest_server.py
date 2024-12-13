@@ -5,13 +5,13 @@ import uuid
 import pika
 import redis
 from epubcheck import EpubCheck
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 
 from constants import (GCS_BUCKET_NAME, MAX_FILE_SIZE, RABBITMQ_HOST,
                        SPLITTER_QUEUE_NAME, UPLOAD_FOLDER, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD, RABBITMQ_USER,
                        REDIS_HOST, REDIS_PORT)
 from messages import split_job, add_book
-from utils import upload_to_gcs
+from utils import upload_to_gcs, download_folder_from_gcs, download_file_from_gcs
 
 # Create a Flask application instance
 app = Flask(__name__)
@@ -119,54 +119,22 @@ def get_job_status(book_uuid):
 # Endpoint to list chapters for a job
 @app.route("/chapters/<book_uuid>", methods=["GET"])
 def list_chapters(book_uuid):
-    try:
-        # Fetch chapters for the book
-        chapters_key = f"book:{book_uuid}:chapters"
-        chapter_ids = redis_client.smembers(chapters_key)
-
-        if not chapter_ids:
-            return jsonify({"error": "No chapters found for this job"}), 404
-
-        chapters = []
-        for chapter_id in chapter_ids:
-            chapter_status = redis_client.get(f"status:chapter:{chapter_id}")
-            chapters.append({"chapter_id": chapter_id, "status": chapter_status})
-
-        return jsonify({"job_id": book_uuid, "chapters": chapters}), 200
-    except Exception as e:
-        return jsonify({"error": f"Failed to list chapters: {e}"}), 500
-
-# Endpoint to fetch job status
-@app.route("/status/<book_uuid>", methods=["GET"])
-def get_job_status(book_uuid):
   try:
-    # Get book status
-    book_status = redis_client.get(f"status:book:{book_uuid}")
-    if not book_status:
-      return jsonify({"error": "Job ID not found"}), 404
-
-    # Get total and completed chapters
-    total_chapters = redis_client.get(f"book:{book_uuid}:total_chapters") or 0
-    completed_chapters = redis_client.get(f"book:{book_uuid}:completed_chapters") or 0
-
-    # Fetch chapters
+    # Fetch chapters for the book
     chapters_key = f"book:{book_uuid}:chapters"
     chapter_ids = redis_client.smembers(chapters_key)
+
+    if not chapter_ids:
+      return jsonify({"error": "No chapters found for this job"}), 404
 
     chapters = []
     for chapter_id in chapter_ids:
       chapter_status = redis_client.get(f"status:chapter:{chapter_id}")
       chapters.append({"chapter_id": chapter_id, "status": chapter_status})
 
-    return jsonify({
-      "job_id": book_uuid,
-      "status": book_status,
-      "total_chapters": int(total_chapters),
-      "completed_chapters": int(completed_chapters),
-      "chapters": chapters
-    }), 200
+    return jsonify({"job_id": book_uuid, "chapters": chapters}), 200
   except Exception as e:
-    return jsonify({"error": f"Failed to fetch status: {e}"}), 500
+    return jsonify({"error": f"Failed to list chapters: {e}"}), 500
 
 
 # Endpoint to fetch chapter title by chapter UUID
@@ -192,10 +160,33 @@ def get_chapter_title(chapter_uuid):
   except Exception as e:
     return jsonify({"error": f"Failed to fetch chapter title: {e}"}), 500
 
+@app.route("/download/<book_uuid>/<chapter_id>", methods=["GET"])
+def download_chapter(book_uuid, chapter_id):
+  """
+  Endpoint to download a chapter audio file by its UUID from GCS.
+  """
+  # Define the GCS path for the chapter audio
+  source_blob_name = f"{book_uuid}/audio/{chapter_id}.mp3"
+  destination_file_name = f"/tmp/{chapter_id}.mp3"
+  try:
+    # Download the file from GCS
+    download_file_from_gcs(GCS_BUCKET_NAME, source_blob_name, destination_file_name)
+
+    # Check if the file exists locally
+    if not os.path.exists(destination_file_name):
+      return jsonify({"error": "Audio file not found in GCS"}), 404
+
+    # Serve the file to the client without specifying a filename
+    return send_file(destination_file_name, as_attachment=True)
+
+  except Exception as e:
+    return jsonify({"error": f"Failed to download chapter: {e}"}), 500
+  finally:
+    # Clean up the temporary file
+    if os.path.exists(destination_file_name):
+      os.remove(destination_file_name)
 
 # ---- Helper methods ----
-
-# TODO: Move this validation logic to the front-end client.
 def validate_epub(file):
   # Check file size
   file.seek(0, os.SEEK_END)

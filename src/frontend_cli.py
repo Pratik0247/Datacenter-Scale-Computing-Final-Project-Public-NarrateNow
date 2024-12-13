@@ -2,7 +2,7 @@ import requests
 import time
 import os
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:55338"
 
 
 def upload_book(file_path):
@@ -11,7 +11,12 @@ def upload_book(file_path):
   """
   try:
     with open(file_path, 'rb') as file:
-      response = requests.post(f"{BASE_URL}/upload", files={"file": file})
+      # Define the file part with a custom content type
+      files = {
+        "file": (os.path.basename(file_path), file, "application/epub+zip")
+      }
+      # Send the request
+      response = requests.post(f"{BASE_URL}/upload", files=files)
     if response.status_code == 200:
       book_uuid = response.json().get("job_id")
       print(f"Book uploaded successfully. Job ID: {book_uuid}")

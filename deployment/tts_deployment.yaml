@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: tts
-        image: pratikbhirud/tts:0.3.2
+        image: pratikbhirud/tts:0.3.5
         env:
         - name: RABBITMQ_HOST
           value: rabbitmq
