@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: tts
 spec:
-  replicas: 1
+  replicas: 5
   selector:
     matchLabels:
       app: tts
