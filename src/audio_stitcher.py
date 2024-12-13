@@ -10,15 +10,18 @@ from redis_ops import REMOVE_CHAPTER
 from utils import download_folder_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
-channel = connection.channel()
+# connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
+# channel = connection.channel()
 
 # Set prefetch count to 1
-channel.basic_qos(prefetch_count=1)
+# channel.basic_qos(prefetch_count=1)
 
 # ---- Queue to hold Stitch jobs ----
-channel.queue_declare(queue=STITCH_QUEUE_NAME)
-channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
+# channel.queue_declare(queue=STITCH_QUEUE_NAME)
+# channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
+
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
+channel = connection.channel()
 
 def notify_event_tracker(operation, message):
   """
@@ -104,9 +107,9 @@ def stitch_audio_files(bucket_name, input_folder_prefix, output_file_gcs_path):
   except Exception as e:
     print(f"Error in audio stitching process: {e}")
     raise
-  finally:
-    # Cleanup temporary files
-    cleanup_temp_files(output_local_path, temp_input_dir)
+  # finally:
+  #   # Cleanup temporary files
+  #   cleanup_temp_files(output_local_path, temp_input_dir)
 
 def process_job(book_uuid:str, chapter_uuid:str):
   print(f"Processing Audio Stitch job: UUID={book_uuid}, Chapter={chapter_uuid}")
@@ -143,14 +146,32 @@ def callback(ch, method, properties, body):
     # Reject the message and requeue for future processing
     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
-# Set up RabbitMQ consumer
-channel.basic_consume(queue=STITCH_QUEUE_NAME, on_message_callback=callback)
-print("Waiting for TTS jobs.")
 
-# ---- Keep the program running ----
-try:
+def start_service():
+  """
+  Initializes RabbitMQ connections and starts consuming messages.
+  """
+
+  channel.queue_declare(queue=STITCH_QUEUE_NAME)
+  channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
+
+  channel.basic_qos(prefetch_count=1)
+
+  channel.basic_consume(queue=STITCH_QUEUE_NAME, on_message_callback=callback)
+  print("Starting the audio stitcher service...")
   channel.start_consuming()
-except KeyboardInterrupt:
-  print("Stopping the TTS program...")
-  channel.stop_consuming()
-  connection.close()
+
+# # Set up RabbitMQ consumer
+# channel.basic_consume(queue=STITCH_QUEUE_NAME, on_message_callback=callback)
+# print("Waiting for TTS jobs.")
+
+# # ---- Keep the program running ----
+# try:
+#   channel.start_consuming()
+# except KeyboardInterrupt:
+#   print("Stopping the TTS program...")
+#   channel.stop_consuming()
+#   connection.close()
+
+if __name__ == "__main__":
+  start_service()
