@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-tracker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-tracker
+  template:
+    metadata:
+      labels:
+        app: event-tracker
+    spec:
+      containers:
+      - name: event-tracker
+        image: pratikbhirud/event_tracker:0.4.0
+        env:
+        - name: RABBITMQ_HOST
+          value: rabbitmq
+        - name: RABBITMQ_USER
+          value: user
+        - name: REDIS_HOST
+          value: redis-service
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: rabbitmq-password

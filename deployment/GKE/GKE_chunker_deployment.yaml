@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chunker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: chunker
+  template:
+    metadata:
+      labels:
+        app: chunker
+    spec:
+      containers:
+      - name: chunker
+        image: pratikbhirud/chunker:0.4.0
+        env:
+        - name: RABBITMQ_HOST
+          value: rabbitmq
+        - name: RABBITMQ_USER
+          value: user
+        - name: REDIS_HOST
+          value: redis-service
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: rabbitmq-password

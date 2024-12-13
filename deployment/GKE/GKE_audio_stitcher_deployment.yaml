@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audio-stitcher
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: audio-stitcher
+  template:
+    metadata:
+      labels:
+        app: audio-stitcher
+    spec:
+      containers:
+      - name: audio-stitcher
+        image: pratikbhirud/audio_stitcher:0.4.0
+        env:
+        - name: RABBITMQ_HOST
+          value: rabbitmq
+        - name: RABBITMQ_USER
+          value: user
+        - name: REDIS_HOST
+          value: redis-service
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: rabbitmq-password

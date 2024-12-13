@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: splitter
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: splitter
+  template:
+    metadata:
+      labels:
+        app: splitter
+    spec:
+      containers:
+      - name: splitter
+        image: pratikbhirud/splitter:0.4.0
+        env:
+        - name: RABBITMQ_HOST
+          value: rabbitmq
+        - name: RABBITMQ_USER
+          value: user
+        - name: REDIS_HOST
+          value: redis-service
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq
+              key: rabbitmq-password
