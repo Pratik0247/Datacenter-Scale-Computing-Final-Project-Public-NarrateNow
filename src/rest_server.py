@@ -3,12 +3,13 @@ import os
 import uuid
 
 import pika
+import redis
 from epubcheck import EpubCheck
 from flask import Flask, jsonify, request
-from google.cloud import storage
 
 from constants import (GCS_BUCKET_NAME, MAX_FILE_SIZE, RABBITMQ_HOST,
-                       SPLITTER_QUEUE_NAME, UPLOAD_FOLDER, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD, RABBITMQ_USER)
+                       SPLITTER_QUEUE_NAME, UPLOAD_FOLDER, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD, RABBITMQ_USER,
+                       REDIS_HOST, REDIS_PORT)
 from messages import split_job, add_book
 from utils import upload_to_gcs
 
@@ -16,8 +17,9 @@ from utils import upload_to_gcs
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# ---- Initialize Google Cloud Storage client -----
-storage_client = storage.Client()
+# ---- Initialize Redis Client -----
+redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+
 
 # ---- Initialize RabbitMQ client for job creation ----
 connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD), heartbeat=3600))
@@ -25,8 +27,7 @@ channel = connection.channel()
 
 # ---- Queue to hold split jobs ----
 channel.queue_declare(queue=SPLITTER_QUEUE_NAME)
-
-
+channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
 
 # ---- API endpoint definitions -----
 
@@ -37,7 +38,6 @@ def hello_puchki():
 
 
 # Upload enpoint receives books from the client and validates it.
-# TODO: Store the book name in redis
 @app.route("/upload", methods=["POST"])
 def upload():
   if "file" not in request.files:
@@ -83,6 +83,115 @@ def upload():
       return jsonify({"error": f"Failed to upload to GCS: {e}"}), 500
   else:
     return jsonify({"error": message}), 400
+
+# Endpoint to fetch job status
+@app.route("/status/<book_uuid>", methods=["GET"])
+def get_job_status(book_uuid):
+  try:
+    # Get book status
+    book_status = redis_client.get(f"status:book:{book_uuid}")
+    if not book_status:
+      return jsonify({"error": "Job ID not found"}), 404
+
+    # Get total and completed chapters
+    total_chapters = redis_client.get(f"book:{book_uuid}:total_chapters") or 0
+    completed_chapters = redis_client.get(f"book:{book_uuid}:completed_chapters") or 0
+
+    # Fetch chapters
+    chapters_key = f"book:{book_uuid}:chapters"
+    chapter_ids = redis_client.smembers(chapters_key)
+
+    chapters = []
+    for chapter_id in chapter_ids:
+      chapter_status = redis_client.get(f"status:chapter:{chapter_id}")
+      chapters.append({"chapter_id": chapter_id, "status": chapter_status})
+
+    return jsonify({
+      "job_id": book_uuid,
+      "status": book_status,
+      "total_chapters": int(total_chapters),
+      "completed_chapters": int(completed_chapters),
+      "chapters": chapters
+    }), 200
+  except Exception as e:
+    return jsonify({"error": f"Failed to fetch status: {e}"}), 500
+
+# Endpoint to list chapters for a job
+@app.route("/chapters/<book_uuid>", methods=["GET"])
+def list_chapters(book_uuid):
+    try:
+        # Fetch chapters for the book
+        chapters_key = f"book:{book_uuid}:chapters"
+        chapter_ids = redis_client.smembers(chapters_key)
+
+        if not chapter_ids:
+            return jsonify({"error": "No chapters found for this job"}), 404
+
+        chapters = []
+        for chapter_id in chapter_ids:
+            chapter_status = redis_client.get(f"status:chapter:{chapter_id}")
+            chapters.append({"chapter_id": chapter_id, "status": chapter_status})
+
+        return jsonify({"job_id": book_uuid, "chapters": chapters}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to list chapters: {e}"}), 500
+
+# Endpoint to fetch job status
+@app.route("/status/<book_uuid>", methods=["GET"])
+def get_job_status(book_uuid):
+  try:
+    # Get book status
+    book_status = redis_client.get(f"status:book:{book_uuid}")
+    if not book_status:
+      return jsonify({"error": "Job ID not found"}), 404
+
+    # Get total and completed chapters
+    total_chapters = redis_client.get(f"book:{book_uuid}:total_chapters") or 0
+    completed_chapters = redis_client.get(f"book:{book_uuid}:completed_chapters") or 0
+
+    # Fetch chapters
+    chapters_key = f"book:{book_uuid}:chapters"
+    chapter_ids = redis_client.smembers(chapters_key)
+
+    chapters = []
+    for chapter_id in chapter_ids:
+      chapter_status = redis_client.get(f"status:chapter:{chapter_id}")
+      chapters.append({"chapter_id": chapter_id, "status": chapter_status})
+
+    return jsonify({
+      "job_id": book_uuid,
+      "status": book_status,
+      "total_chapters": int(total_chapters),
+      "completed_chapters": int(completed_chapters),
+      "chapters": chapters
+    }), 200
+  except Exception as e:
+    return jsonify({"error": f"Failed to fetch status: {e}"}), 500
+
+
+# Endpoint to fetch chapter title by chapter UUID
+@app.route("/chapter/<chapter_uuid>/title", methods=["GET"])
+def get_chapter_title(chapter_uuid):
+  """
+  Fetch the title of a chapter using its UUID.
+  """
+  try:
+    # Redis key for the chapter's metadata
+    chapter_key = f"chapter:{chapter_uuid}"
+
+    # Fetch the chapter title from Redis
+    chapter_title = redis_client.hget(chapter_key, "title")
+
+    if not chapter_title:
+      return jsonify({"error": "Chapter title not found"}), 404
+
+    return jsonify({
+      "chapter_uuid": chapter_uuid,
+      "title": chapter_title
+    }), 200
+  except Exception as e:
+    return jsonify({"error": f"Failed to fetch chapter title: {e}"}), 500
+
 
 # ---- Helper methods ----
 

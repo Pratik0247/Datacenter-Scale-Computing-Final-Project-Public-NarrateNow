@@ -154,6 +154,10 @@ def add_chapter_impl(job):
   chapters_key = f"book:{book_uuid}:chapters"
   add_relationship(chapters_key, chapter_uuid)
 
+  # Increment the total chapters count
+  total_key = f"book:{book_uuid}:total_chapters"
+  redis_client.incr(total_key)
+
   print(f"Chapter {chapter_title} (uuid: {chapter_uuid}) added under {book_uuid}")
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -225,6 +229,20 @@ def update_chapter_status_impl(job):
   # Update the chapter's status
   set_status("chapter", chapter_uuid, status)
   print(f"Chapter status updated for {chapter_uuid}: Status --> {status}")
+
+  # Increment completed chapter count if status is 'completed'
+  if status == "completed":
+    completed_key = f"book:{book_uuid}:completed_chapters"
+    total_key = f"book:{book_uuid}:total_chapters"
+
+    redis_client.incr(completed_key)
+    completed_count = int(redis_client.get(completed_key))
+    total_count = int(redis_client.get(total_key))
+
+    # Mark the book as completed if all chapters are done
+    if completed_count == total_count:
+      set_status("book", book_uuid, "completed")
+      print(f"Book {book_uuid} marked as completed.")
 
 # ---------------------------------------------------------------------------------------------------------------------
 

@@ -6,8 +6,8 @@ from pydub import AudioSegment
 
 from constants import GCS_BUCKET_NAME, RABBITMQ_HOST, EVENT_TRACKER_QUEUE_NAME, STITCH_QUEUE_NAME, RABBITMQ_PASSWORD, \
   RABBITMQ_USER
-from messages import remove_chapter
-from redis_ops import REMOVE_CHAPTER
+from messages import remove_chapter, update_chapter_status
+from redis_ops import REMOVE_CHAPTER, UPDATE_CHAPTER_STATUS
 from utils import download_folder_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
@@ -134,7 +134,8 @@ def process_job(book_uuid:str, chapter_uuid:str):
   stitch_audio_files(GCS_BUCKET_NAME, source_folder_address, destination_file_address)
 
   # Remove the chapter from the book's tracking set
-  notify_event_tracker(REMOVE_CHAPTER, remove_chapter(book_uuid, chapter_uuid))
+  # notify_event_tracker(REMOVE_CHAPTER, remove_chapter(book_uuid, chapter_uuid))
+  notify_event_tracker(UPDATE_CHAPTER_STATUS, update_chapter_status(book_uuid, chapter_uuid, 'completed'))
 
 def callback(ch, method, properties, body):
   """
