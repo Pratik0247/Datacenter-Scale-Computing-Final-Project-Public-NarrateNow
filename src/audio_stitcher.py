@@ -26,7 +26,8 @@ connection = pika.BlockingConnection(
     RABBITMQ_HOST,
     credentials=pika.PlainCredentials(
       username=RABBITMQ_USER,
-      password=RABBITMQ_PASSWORD)
+      password=RABBITMQ_PASSWORD),
+    heartbeat=3600
   )
 )
 channel = connection.channel()

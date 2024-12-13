@@ -1,22 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rest-server
+  name: splitter
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rest-server
+      app: tts
   template:
     metadata:
       labels:
-        app: rest-server
+        app: tts
     spec:
       containers:
-      - name: rest-server
-        image: pratikbhirud/rest_server:0.1.5
-        ports:
-        - containerPort: 8000
+      - name: tts
+        image: pratikbhirud/tts:0.1.5
         env:
         - name: RABBITMQ_HOST
           value: rabbitmq

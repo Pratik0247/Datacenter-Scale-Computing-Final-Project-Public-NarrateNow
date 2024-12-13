@@ -11,7 +11,7 @@ from redis_ops import ADD_CHUNK, UPDATE_CHAPTER_STATUS
 from utils import download_file_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD), heartbeat=3600))
 channel = connection.channel()
 
 def read_text_from_file(file_path):

@@ -33,7 +33,7 @@ ALLOWED_CHUNK_STATUS = {
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
 # ---- Initialize RabbitMQ Connection ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD), heartbeat=3600))
 channel = connection.channel()
 
 

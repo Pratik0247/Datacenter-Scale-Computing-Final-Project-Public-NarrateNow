@@ -11,7 +11,7 @@ from redis_ops import UPDATE_CHUNK_STATUS, REMOVE_CHUNK
 from utils import download_file_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD), heartbeat=3600))
 channel = connection.channel()
 
 # ---- Instantiate a client for the Text-to-Speech API ----

@@ -16,7 +16,7 @@ from messages import add_chapter, update_book_status, chunker_job
 from utils import download_file_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD), heartbeat=3600))
 channel = connection.channel()
 
 
@@ -243,7 +243,7 @@ def is_metadata(chapter_title, chapter_text):
 
 def start_service():
   # ---- Queue to hold split jobs ----
-  channel.queue_declare(queue=SPLITTER_QUEUE_NAME)
+  channel.queue_declare(queue = SPLITTER_QUEUE_NAME)
   channel.queue_declare(queue = CHUNKER_QUEUE_NAME)
 
   # ---- Start consuming messages from the queue ----
