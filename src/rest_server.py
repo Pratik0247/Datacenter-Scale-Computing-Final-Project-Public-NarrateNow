@@ -8,7 +8,7 @@ from flask import Flask, jsonify, request
 from google.cloud import storage
 
 from constants import (GCS_BUCKET_NAME, MAX_FILE_SIZE, RABBITMQ_HOST,
-                       SPLITTER_QUEUE_NAME, UPLOAD_FOLDER, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_USER, RABBITMQ_PASSWORD)
+                       SPLITTER_QUEUE_NAME, UPLOAD_FOLDER, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD)
 from messages import split_job, add_book
 from utils import upload_to_gcs
 

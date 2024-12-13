@@ -4,13 +4,13 @@ from tempfile import NamedTemporaryFile
 import pika
 from google.cloud import texttospeech
 
-from constants import GCS_BUCKET_NAME, RABBITMQ_HOST, TTS_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME
+from constants import GCS_BUCKET_NAME, RABBITMQ_HOST, TTS_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD
 from messages import update_chunk_status, remove_chunk
 from redis_ops import UPDATE_CHUNK_STATUS, REMOVE_CHUNK
 from utils import download_file_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username='user', password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
 
 # Set prefetch count to 1

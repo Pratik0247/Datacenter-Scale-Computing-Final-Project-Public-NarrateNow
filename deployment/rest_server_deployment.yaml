@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rest-server-deployment
+  name: rest-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rest-server-deployment
+      app: rest-server
   template:
     metadata:
       labels:
-        app: rest-server-deployment
+        app: rest-server
     spec:
       containers:
-      - name: rest-server-deployment
-        image: pratikbhirud/rest_server:0.0.4
+      - name: rest-server
+        image: pratikbhirud/rest_server:0.0.6
         ports:
         - containerPort: 8000
         env:

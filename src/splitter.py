@@ -10,12 +10,12 @@ from bs4 import BeautifulSoup
 from ebooklib import ITEM_DOCUMENT, epub
 
 from constants import (CHUNKER_QUEUE_NAME, DOWNLOAD_FOLDER,
-                       RABBITMQ_HOST, SPLITTER_QUEUE_NAME, GCS_BUCKET_NAME, EVENT_TRACKER_QUEUE_NAME)
+                       RABBITMQ_HOST, SPLITTER_QUEUE_NAME, GCS_BUCKET_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD)
 from messages import add_chapter, update_book_status, chunker_job
 from utils import download_file_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username='user', password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
 
 # ---- Queue to hold split jobs ----

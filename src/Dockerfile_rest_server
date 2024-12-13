@@ -1,6 +1,12 @@
 FROM python:3.9-alpine
 
-WORKDIR /app
+WORKDIR /
+
+# Install Java and other dependencies
+RUN apk add --no-cache openjdk11
+
+# Set JAVA_HOME (optional, depends on the requirements of EpubCheck)
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 
 COPY sonic-fact-437801-n6-1bf03fb77c7d.json /app/credentials.json
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json

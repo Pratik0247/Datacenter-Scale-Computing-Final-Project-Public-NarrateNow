@@ -4,7 +4,7 @@ import pika
 import redis
 
 import redis_ops
-from constants import REDIS_HOST, REDIS_PORT, STITCH_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_HOST
+from constants import REDIS_HOST, REDIS_PORT, STITCH_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_HOST, RABBITMQ_PASSWORD
 from messages import audio_stitch_job
 
 ALLOWED_BOOK_STATUS = {
@@ -32,7 +32,7 @@ ALLOWED_CHUNK_STATUS = {
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
 # ---- Initialize RabbitMQ Connection ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username='user', password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
 
 # Declare queues

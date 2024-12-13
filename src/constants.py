@@ -5,7 +5,6 @@ DOWNLOAD_FOLDER = "downloads"
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 GCS_BUCKET_NAME = "dcsc-project-test"
 RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
-RABBITMQ_USER = os.getenv('RABBITMQ_USER', 'guest')
 RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', 'guest')
 SPLITTER_QUEUE_NAME = 'splitter_queue'
 CHUNKER_QUEUE_NAME = 'chunker_queue'

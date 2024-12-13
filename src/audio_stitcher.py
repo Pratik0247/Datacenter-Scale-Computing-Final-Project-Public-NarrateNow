@@ -4,7 +4,7 @@ import os
 import pika
 from pydub import AudioSegment
 
-from constants import GCS_BUCKET_NAME, RABBITMQ_HOST, EVENT_TRACKER_QUEUE_NAME, STITCH_QUEUE_NAME
+from constants import GCS_BUCKET_NAME, RABBITMQ_HOST, EVENT_TRACKER_QUEUE_NAME, STITCH_QUEUE_NAME, RABBITMQ_PASSWORD
 from messages import remove_chapter
 from redis_ops import REMOVE_CHAPTER
 from utils import download_folder_from_gcs, upload_to_gcs
@@ -20,7 +20,14 @@ from utils import download_folder_from_gcs, upload_to_gcs
 # channel.queue_declare(queue=STITCH_QUEUE_NAME)
 # channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
+connection = pika.BlockingConnection(
+  pika.ConnectionParameters(
+    RABBITMQ_HOST,
+    credentials=pika.PlainCredentials(
+      username='user',
+      password=RABBITMQ_PASSWORD)
+  )
+)
 channel = connection.channel()
 
 def notify_event_tracker(operation, message):
@@ -151,7 +158,6 @@ def start_service():
   """
   Initializes RabbitMQ connections and starts consuming messages.
   """
-
   channel.queue_declare(queue=STITCH_QUEUE_NAME)
   channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
 
@@ -160,18 +166,6 @@ def start_service():
   channel.basic_consume(queue=STITCH_QUEUE_NAME, on_message_callback=callback)
   print("Starting the audio stitcher service...")
   channel.start_consuming()
-
-# # Set up RabbitMQ consumer
-# channel.basic_consume(queue=STITCH_QUEUE_NAME, on_message_callback=callback)
-# print("Waiting for TTS jobs.")
-
-# # ---- Keep the program running ----
-# try:
-#   channel.start_consuming()
-# except KeyboardInterrupt:
-#   print("Stopping the TTS program...")
-#   channel.stop_consuming()
-#   connection.close()
 
 if __name__ == "__main__":
   start_service()

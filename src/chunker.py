@@ -4,13 +4,13 @@ from io import BytesIO
 
 import pika
 
-from constants import CHUNKER_QUEUE_NAME, GCS_BUCKET_NAME, RABBITMQ_HOST, TTS_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME
+from constants import CHUNKER_QUEUE_NAME, GCS_BUCKET_NAME, RABBITMQ_HOST, TTS_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD
 from messages import tts_job, update_chapter_status, add_chunk
 from redis_ops import ADD_CHUNK, UPDATE_CHAPTER_STATUS
 from utils import download_file_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username='user', password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
 
 # Set prefetch count to 1
@@ -144,14 +144,18 @@ def callback(ch, method, properties, body):
     # Reject the message and requeue for future processing
     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
-# Set up RabbitMQ consumer
-channel.basic_consume(queue=CHUNKER_QUEUE_NAME, on_message_callback=callback)
+def start_service():
+  # Set up RabbitMQ consumer
+  channel.basic_consume(queue=CHUNKER_QUEUE_NAME, on_message_callback=callback)
 
-print("Waiting for chunker jobs.")
-# ---- Keep the program running ----
-try:
-  channel.start_consuming()
-except KeyboardInterrupt:
-  print("Stopping the chunker program...")
-  channel.stop_consuming()
-  connection.close()
+  print("Waiting for chunker jobs.")
+  # ---- Keep the program running ----
+  try:
+    channel.start_consuming()
+  except KeyboardInterrupt:
+    print("Stopping the chunker program...")
+    channel.stop_consuming()
+    connection.close()
+
+if __name__ == "__main__":
+  start_service()
