@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <title>Status</title>
+</head>
+<body>
+<div class="container">
+    <h1 class="mt-5">Book Processing Status</h1>
+    <p>Status: {{ status }}</p>
+
+    {% if status == 'completed' %}
+        <p>Download your chapters:</p>
+        {% for chapter in chapters %}
+            <a href="{{ url_for('download_chapter', job_id=job_id, chapter_id=chapter['chapter_id']) }}">{{ chapter['title'] }}</a><br>
+        {% endfor %}
+    {% elif status == 'failed' %}
+        <p>Processing failed.</p>
+    {% else %}
+        <p>Polling for status...</p>
+        <script>
+            setTimeout(function() {
+                window.location.href = "{{ url_for('status', job_id=job_id) }}";
+            }, 5000); // Poll every 5 seconds
+        </script>
+    {% endif %}
+</div>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>
