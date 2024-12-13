@@ -11,7 +11,7 @@ from constants import (GCS_BUCKET_NAME, MAX_FILE_SIZE, RABBITMQ_HOST,
                        SPLITTER_QUEUE_NAME, UPLOAD_FOLDER, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD, RABBITMQ_USER,
                        REDIS_HOST, REDIS_PORT)
 from messages import split_job, add_book
-from utils import upload_to_gcs, download_folder_from_gcs, download_file_from_gcs
+from utils import upload_to_gcs, download_file_from_gcs
 
 # Create a Flask application instance
 app = Flask(__name__)
@@ -35,6 +35,14 @@ channel.queue_declare(queue=EVENT_TRACKER_QUEUE_NAME)
 @app.route("/")
 def hello_puchki():
   return "Hello Puchki! :)"
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    return "OK", 200
+
+@app.route("/ready", methods=["GET"])
+def readiness_check():
+    return "READY", 200
 
 
 # Upload enpoint receives books from the client and validates it.

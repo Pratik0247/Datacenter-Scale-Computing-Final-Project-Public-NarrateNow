@@ -2,7 +2,7 @@ import requests
 import time
 import os
 
-BASE_URL = "http://localhost:62887"
+BASE_URL = "http://34.45.125.238:8000"
 
 
 def upload_book(file_path):
