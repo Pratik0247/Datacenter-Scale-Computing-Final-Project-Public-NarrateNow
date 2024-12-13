@@ -4,13 +4,14 @@ from io import BytesIO
 
 import pika
 
-from constants import CHUNKER_QUEUE_NAME, GCS_BUCKET_NAME, RABBITMQ_HOST, TTS_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, RABBITMQ_PASSWORD
+from constants import CHUNKER_QUEUE_NAME, GCS_BUCKET_NAME, RABBITMQ_HOST, TTS_QUEUE_NAME, EVENT_TRACKER_QUEUE_NAME, \
+  RABBITMQ_PASSWORD, RABBITMQ_USER
 from messages import tts_job, update_chapter_status, add_chunk
 from redis_ops import ADD_CHUNK, UPDATE_CHAPTER_STATUS
 from utils import download_file_from_gcs, upload_to_gcs
 
 # ---- Initialize RabbitMQ client to pick split jobs ----
-connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username='user', password=RABBITMQ_PASSWORD)))
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=pika.PlainCredentials(username=RABBITMQ_USER, password=RABBITMQ_PASSWORD)))
 channel = connection.channel()
 
 # Set prefetch count to 1

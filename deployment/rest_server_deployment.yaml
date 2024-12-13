@@ -20,6 +20,8 @@ spec:
         env:
         - name: RABBITMQ_HOST
           value: rabbitmq
+        - name: RABBITMQ_USER
+          value: user
         - name: REDIS_HOST
           value: redis-service
         - name: RABBITMQ_PASSWORD
