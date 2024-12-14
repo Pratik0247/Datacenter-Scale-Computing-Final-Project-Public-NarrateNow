@@ -56,6 +56,10 @@ Deploy the services with a single command:
 ```bash
 ./deploy_services.sh
 ```
+If want to deploy on GKE use the following command:
+```bash
+./deploy_services_GKE.sh
+```
 Usage
 1. Verifying the Deployment
 2. After the script runs, verify that all services are running:
