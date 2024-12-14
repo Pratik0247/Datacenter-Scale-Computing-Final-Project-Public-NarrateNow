@@ -53,8 +53,7 @@ chmod +x deploy.sh
 ```
 ### Step 3: Run the Deployment Script
 Deploy the services with a single command:
-```
-bash
+```bash
 ./deploy_services.sh
 ```
 Usage
