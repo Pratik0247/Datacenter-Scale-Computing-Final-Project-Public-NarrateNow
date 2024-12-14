@@ -1,4 +1,7 @@
-# NarrateNow Deployment
+# NarrateNow: A Cloud-based Chapter-wise Audiobook Generation service - Team 96
+Participants:  
+- Neha Sanjay Kolambe (CSCI 5253)
+- Pratik Sanjay Bhirud (CSCI 5253)
 
 This repository contains the deployment script and configuration files to set up the **NarrateNow** audiobook generation platform on a Kubernetes cluster. The platform leverages **RabbitMQ**, **Redis**, and various backend microservices to create chapter-wise audiobooks.
 
