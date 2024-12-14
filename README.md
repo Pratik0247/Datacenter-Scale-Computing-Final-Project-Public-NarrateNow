@@ -12,9 +12,9 @@ This repository contains the deployment script and configuration files to set up
   - [Step 2: Make the Script Executable](#step-2-make-the-script-executable)
   - [Step 3: Run the Deployment Script](#step-3-run-the-deployment-script)
 - [Usage](#usage)
-  - [Verifying the Deployment](#verifying-the-deployment)
-  - [Accessing Services](#accessing-services)
-  - [Testing the Platform](#testing-the-platform)
+  - [Verifying the Deployment](#step-1-verifying-the-deployment)
+  - [Accessing Services](#step-2-accessing-services)
+  - [Testing the Platform](#step-3-testing-the-platform)
 
 ## Overview
 
@@ -65,13 +65,16 @@ If want to deploy on GKE use the following command:
 ./deploy_services_GKE.sh
 ```
 ## Usage
+
 ### Step 1: Verifying the Deployment
 After the script runs, verify that all services are running:
 ```bash
 kubectl get pods
 ```
+
 ### Step 2: Accessing Services
 1. Use the REST server endpoint to interact with the platform.
 2. RabbitMQ and Redis are deployed internally for backend service communication.
+   
 ### Step 3: Testing the Platform
 You can upload EPUB files via the frontend interface (if configured) or send requests directly to the REST API for processing.
