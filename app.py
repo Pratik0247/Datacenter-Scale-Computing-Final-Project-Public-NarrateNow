@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
-import requests
+import io
 import time
-import os
+
+import requests
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file
 
 app = Flask(__name__)
 
@@ -41,7 +42,27 @@ def status(job_id):
         if response.status_code == 200:
             data = response.json()
             if data["status"] == "completed":
-                return render_template("download.html", job_id=job_id, chapters=data["completed_chapters"])
+                # Fetch the list of chapters
+                chapters_response = requests.get(f"{BASE_URL}/chapters/{job_id}")
+                if chapters_response.status_code == 200:
+                    chapters = chapters_response.json().get("chapters", [])
+                    chapters_with_titles = []
+                    for chapter in chapters:
+                        chapter_id = chapter["chapter_id"]
+                        title_response = requests.get(f"{BASE_URL}/chapter/{chapter_id}/title")
+                        if title_response.status_code == 200:
+                            title = title_response.json().get("title", f"Chapter {chapter_id}")
+                        else:
+                            title = f"Chapter {chapter_id}"  # Default to generic title if fetching fails
+
+                        # Add chapter info with title
+                        chapters_with_titles.append({"chapter_id": chapter_id, "title": title})
+
+                    # Render the download template with chapter titles
+                    return render_template("download.html", job_id=job_id, chapters=chapters_with_titles)
+                else:
+                    error_message = chapters_response.json().get("error", "Unknown error fetching chapters.")
+                    return render_template("error.html", message=error_message)
             elif data["status"] == "failed":
                 return render_template("error.html", message="Processing failed.")
         else:
@@ -60,14 +81,30 @@ def download(job_id):
 
 @app.route("/download_chapter/<job_id>/<chapter_id>")
 def download_chapter(job_id, chapter_id):
+    # Fetch the chapter title from the REST server
+    title_response = requests.get(f"{BASE_URL}/chapter/{chapter_id}/title")
+    if title_response.status_code == 200:
+        chapter_title = title_response.json().get("title", f"chapter_{chapter_id}")
+    else:
+        chapter_title = f"chapter_{chapter_id}"  # Default title if fetching fails
+
+    # Sanitize the title for use as a filename
+    sanitized_title = "".join(c if c.isalnum() or c in " _-" else "_" for c in chapter_title)
+
+    # Stream the chapter file from the backend REST server
     response = requests.get(f"{BASE_URL}/download/{job_id}/{chapter_id}", stream=True)
     if response.status_code == 200:
-        file_path = f"{chapter_id}.mp3"
-        with open(file_path, "wb") as file:
-            file.write(response.content)
-        return f"Chapter {chapter_id} downloaded successfully."
+        # Send the file to the browser with the sanitized title as the download name
+        return send_file(
+            io.BytesIO(response.content),
+            as_attachment=True,
+            download_name=f"{sanitized_title}.mp3",
+            mimetype="audio/mpeg"
+        )
     else:
-        return "Failed to download chapter."
+        # Return an error message if the file cannot be downloaded
+        return render_template("error.html", message="Failed to download chapter.")
+
 
 if __name__ == "__main__":
     app.run(debug=True)

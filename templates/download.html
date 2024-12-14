@@ -10,23 +10,23 @@
     <div class="container mt-5">
         <h1 class="text-center">Download Processed Chapters</h1>
         <table class="table table-bordered mt-4">
-            <thead>
-                <tr>
-                    <th>Chapter ID</th>
-                    <th>Download Link</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for chapter in chapters %}
-                <tr>
-                    <td>{{ chapter.chapter_id }}</td>
-                    <td>
-                        <a href="/download_chapter/{{ job_id }}/{{ chapter.chapter_id }}" class="btn btn-success">Download</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <thead>
+        <tr>
+            <th>Chapter Title</th>
+            <th>Download Link</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for chapter in chapters %}
+        <tr>
+            <td>{{ chapter.title }}</td>
+            <td>
+                <a href="/download_chapter/{{ job_id }}/{{ chapter.chapter_id }}" class="btn btn-success">Download</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
     </div>
 </body>
 </html>
