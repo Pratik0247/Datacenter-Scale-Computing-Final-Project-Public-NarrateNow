@@ -70,8 +70,8 @@ After the script runs, verify that all services are running:
 ```bash
 kubectl get pods
 ```
-## Step 2: Accessing Services
+### Step 2: Accessing Services
 1. Use the REST server endpoint to interact with the platform.
 2. RabbitMQ and Redis are deployed internally for backend service communication.
-## Step 3: Testing the Platform
+### Step 3: Testing the Platform
 You can upload EPUB files via the frontend interface (if configured) or send requests directly to the REST API for processing.
