@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: audio-stitcher
-        image: pratikbhirud/audio_stitcher:0.5.0
+        image: pratikbhirud/audio_stitcher:1.0.0
         env:
         - name: RABBITMQ_HOST
           value: rabbitmq

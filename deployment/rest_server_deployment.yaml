@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: rest-server
-        image: pratikbhirud/rest_server:0.5.0
+        image: pratikbhirud/rest_server:1.0.0
         ports:
         - containerPort: 8000
         env:

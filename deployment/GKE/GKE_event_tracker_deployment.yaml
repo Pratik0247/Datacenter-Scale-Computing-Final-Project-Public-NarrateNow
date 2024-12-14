@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: event-tracker
-        image: pratikbhirud/event_tracker:0.4.0
+        image: pratikbhirud/event_tracker:1.0.0
         env:
         - name: RABBITMQ_HOST
           value: rabbitmq
