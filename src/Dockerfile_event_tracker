@@ -2,9 +2,6 @@ FROM python:3.11-alpine
 
 WORKDIR /app
 
-COPY sonic-fact-437801-n6-1bf03fb77c7d.json /app/credentials.json
-ENV GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
